@@ -1,138 +1,142 @@
-# Chicken Disease Classification using Vision Transformer
+# Chicken Feces Disease Classification System
 
-A deep learning-based system for automated classification of chicken feces to detect common poultry diseases.
+This project uses deep learning (Vision Transformer - ViT-B/16) to analyze and classify chicken feces images to detect diseases.
 
-## Project Overview
+## Overview
 
-This project implements a classification system that uses Vision Transformer (ViT) to identify health conditions in chickens through fecal sample image analysis. The system can categorize fecal samples into four classes:
-
-* **Chicken_Coccidiosis**: Indicates coccidiosis infection
-* **Chicken_Healthy**: Indicates normal, healthy condition
-* **Chicken_NewCastleDisease**: Indicates Newcastle disease
-* **Chicken_Salmonella**: Indicates salmonellosis infection
-
-## Architecture
-
-The system is built using the following architecture:
-
-* **Deep Learning Model**: Vision Transformer (ViT-B/16) 
-* **Application Framework**: Flask web application for easy use
-* **Interface**: Responsive web-based UI for image uploads and results visualization
-
-## Features
-
-* **High Accuracy Classification**: State-of-the-art ViT model provides up to 95% accuracy
-* **Interactive Web Interface**: User-friendly upload and result visualization
-* **Detailed Analysis**: Confidence scores, class probabilities, disease information
-* **Test Time Augmentation**: Enhanced prediction accuracy through TTA
-* **Optimized Performance**: Mixed precision inference for faster processing
+The system classifies chicken feces images into four categories:
+- Chicken_Coccidiosis
+- Chicken_Healthy
+- Chicken_NewCastleDisease
+- Chicken_Salmonella
 
 ## Project Structure
 
 ```
-chicken_feces_dataset/
-├── test/                    # Test set images
-│   ├── Chicken_Coccidiosis/
-│   ├── Chicken_Healthy/
-│   ├── Chicken_NewCastleDisease/
-│   └── Chicken_Salmonella/
-├── train/                   # Training set images
-│   ├── Chicken_Coccidiosis/
-│   ├── Chicken_Healthy/
-│   ├── Chicken_NewCastleDisease/
-│   └── Chicken_Salmonella/
-├── models/                  # Saved model weights
-│   └── best_vit_chicken_classifier.pth
-├── templates/               # HTML templates
-│   └── index.html
-├── uploads/                 # Temporary storage for uploaded images
-├── app.py                   # Web application
-├── dataset.py               # Dataset loading and augmentation
-├── model.py                 # Model architectures
-├── predict.py               # Inference utilities
-├── train.py                 # Training script
-├── utils.py                 # Utility functions
-└── requirements.txt         # Project dependencies
+.
+├── app.py              # Flask web application
+├── dataset.py          # Data loading and processing
+├── model.py            # Model architecture
+├── predict.py          # Prediction functionality
+├── train.py            # Training script
+├── uploads/            # Uploaded images for prediction
+├── models/             # Saved model weights
+└── templates/          # HTML templates for web interface
+    └── index.html      # Main page template
 ```
 
-## Installation
+## Requirements
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/chicken-disease-classification.git
-   cd chicken-disease-classification
-   ```
+The project requires the following Python packages:
+- torch
+- torchvision
+- timm
+- numpy
+- flask
+- pillow
+- scikit-learn
+- matplotlib
+- seaborn
+- tqdm
 
-2. Create a virtual environment (optional but recommended):
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+You can install them using the included requirements.txt file:
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-4. Download or train a model:
-   - To train a new model: `python train.py --data_dir chicken_feces_dataset`
-   - To use a pre-trained model, place the `.pth` file in the `models` directory
+## Training the Model
 
-## Usage
+To train the model, use the train.py script:
 
-### Web Application
+```bash
+python train.py --data_dir path/to/dataset --output_dir ./output --num_epochs 20 --batch_size 16
+```
 
-1. Start the web server:
-   ```bash
-   python app.py
-   ```
+Important arguments:
+- `--data_dir`: Path to the dataset directory (required)
+- `--output_dir`: Directory to save model weights and results (default: .)
+- `--num_epochs`: Number of epochs for training (default: 20)
+- `--batch_size`: Batch size for training (default: 16)
+- `--learning_rate`: Initial learning rate (default: 0.0005)
+- `--model_type`: Model type to use (default: vit_base_patch16_224)
+- `--no_cuda`: Disable CUDA even if available
 
-2. Open your browser and go to `http://localhost:5000`
+The dataset directory should have the following structure:
+```
+dataset/
+├── train/                  # Training images
+│   ├── Chicken_Coccidiosis/
+│   ├── Chicken_Healthy/
+│   ├── Chicken_NewCastleDisease/
+│   └── Chicken_Salmonella/
+└── test/                   # Test/validation images
+    ├── Chicken_Coccidiosis/
+    ├── Chicken_Healthy/
+    ├── Chicken_NewCastleDisease/
+    └── Chicken_Salmonella/
+```
 
-3. Upload a chicken fecal image and view the classification results
+Alternatively, if you don't have a train/test split, you can use a flat structure and the code will automatically create a split:
+```
+dataset/
+├── Chicken_Coccidiosis/
+├── Chicken_Healthy/
+├── Chicken_NewCastleDisease/
+└── Chicken_Salmonella/
+```
 
-### Command Line Classification
+## Making Predictions
 
-To classify a single image:
+You can use the predict.py script to make predictions on individual images:
+
 ```bash
 python predict.py --image_path path/to/image.jpg --model_path models/best_vit_chicken_classifier.pth --visualize
 ```
 
-For batch processing:
+Arguments:
+- `--image_path`: Path to the input image (required)
+- `--model_path`: Path to the trained model (default: models/best_vit_chicken_classifier.pth)
+- `--visualize`: Flag to visualize the prediction
+- `--output_path`: Path to save visualization (optional)
+- `--no_cuda`: Disable CUDA even if available
+
+## Web Application
+
+To start the web application:
+
 ```bash
-python predict.py --image_path path/to/images/folder --batch_mode --output_path results/
+python app.py
 ```
 
-### Training a Model
+This starts a Flask web server at http://localhost:5000/ where you can upload images for classification.
 
-```bash
-python train.py --data_dir chicken_feces_dataset --model_type vit_b16 --batch_size 16 --head_epochs 10 --finetune_epochs 20
-```
+## Model Architecture
 
-Options:
-- `--model_type`: Model architecture (`vit_b16`, `vit_b32`, `vit_l16`, `efficient_b2`, etc.)
-- `--batch_size`: Batch size for training (use smaller for ViT models)
-- `--head_epochs`: Number of epochs for training only the classifier head
-- `--finetune_epochs`: Number of epochs for fine-tuning the model
-- `--mixed_precision`: Enable mixed precision training for faster performance on compatible GPUs
+The system uses a Vision Transformer (ViT-B/16) model, which has been simplified while maintaining high accuracy. The model consists of:
 
-## Performance
+1. A pre-trained ViT-B/16 backbone
+2. A custom classifier head optimized for the chicken feces classification task
 
-The Vision Transformer model achieves the following performance metrics:
+## Improvements from Previous Version
 
-| Model | Accuracy | Precision | Recall | F1 Score |
-|-------|----------|-----------|--------|----------|
-| ViT-B/16 | 94.2% | 93.8% | 94.2% | 94.0% |
-| ViT-B/32 | 93.5% | 93.1% | 93.5% | 93.3% |
-| ViT-L/16 | 95.1% | 94.8% | 95.1% | 94.9% |
-| EfficientNet-B2 | 91.5% | 91.2% | 91.5% | 91.3% |
+This implementation has been significantly simplified compared to the previous version:
 
-## References
+1. **Reduced Complexity**: Removed unnecessary complexity in all components
+2. **Streamlined Training**: Simplified training process with effective but lighter augmentation
+3. **Optimized Model**: Streamlined model architecture while maintaining accuracy
+4. **Memory Efficiency**: Reduced memory footprint during training
+5. **Simplified Web App**: Kept core functionality while removing unnecessary complexity
 
-1. Dosovitskiy, A., et al. (2020). "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale." ICLR 2021.
-2. He, K., et al. (2016). "Deep Residual Learning for Image Recognition." CVPR 2016.
-3. Tan, M., & Le, Q. (2019). "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks." ICML 2019.
+## Performance Expectations
 
-## License
+On a modern GPU, training should complete in a few hours even with a substantial dataset. The simplified model is expected to achieve accuracy comparable to the original, more complex implementation.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Notes for CPU Training
+
+If training on a CPU:
+- Batch size is automatically reduced to avoid memory issues
+- Number of workers is reduced
+- Some advanced features are disabled
+
+These adjustments ensure the model can be trained on less powerful hardware, albeit more slowly.
