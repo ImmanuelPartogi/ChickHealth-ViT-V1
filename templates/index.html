@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Klasifikasi Penyakit Ayam dari Kotoran</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 20px;
+            padding-bottom: 50px;
+        }
+        .container {
+            max-width: 900px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 20px;
+        }
+        h1 {
+            color: #0d6efd;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-container {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            background-color: #f8f9fa;
+        }
+        .preview-container {
+            display: none;
+            margin-top: 30px;
+            text-align: center;
+        }
+        #preview-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .result-container {
+            display: none;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            background-color: #f8f9fa;
+        }
+        .disease-info {
+            display: none;
+            margin-top: 20px;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+        .progress-bar {
+            height: 25px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 0.5s;
+        }
+        .progress-label {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0d6efd;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .class-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Klasifikasi Penyakit Ayam dari Kotoran</h1>
+        
+        <div class="upload-container">
+            <h3>Unggah Gambar</h3>
+            <p class="text-muted">Unggah gambar kotoran ayam untuk mendeteksi penyakit</p>
+            <input type="file" id="file-input" class="form-control mb-3" accept="image/*">
+            <button id="upload-btn" class="btn btn-primary">Klasifikasikan Gambar</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="mt-2">Menganalisis gambar...</p>
+        </div>
+        
+        <div class="preview-container" id="preview-container">
+            <h3>Pratinjau Gambar</h3>
+            <img id="preview-image" src="#" alt="Pratinjau Gambar" class="mt-3">
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <h3>Hasil Klasifikasi</h3>
+            <div class="alert alert-primary" role="alert">
+                <h4 id="prediction-class"></h4>
+                <p id="prediction-confidence"></p>
+            </div>
+            
+            <h4 class="mt-4">Distribusi Probabilitas</h4>
+            <div id="probability-bars"></div>
+            
+            <div class="disease-info mt-4" id="disease-info">
+                <h4>Informasi Penyakit</h4>
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Deskripsi</h5>
+                        <p class="card-text" id="disease-description"></p>
+                        
+                        <h5 class="card-title mt-3">Gejala</h5>
+                        <p class="card-text" id="disease-symptoms"></p>
+                        
+                        <h5 class="card-title mt-3">Pengobatan</h5>
+                        <p class="card-text" id="disease-treatment"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('file-input');
+            const uploadBtn = document.getElementById('upload-btn');
+            const previewContainer = document.getElementById('preview-container');
+            const previewImage = document.getElementById('preview-image');
+            const resultContainer = document.getElementById('result-container');
+            const predictionClass = document.getElementById('prediction-class');
+            const predictionConfidence = document.getElementById('prediction-confidence');
+            const probabilityBars = document.getElementById('probability-bars');
+            const loading = document.getElementById('loading');
+            const diseaseInfo = document.getElementById('disease-info');
+            const diseaseDescription = document.getElementById('disease-description');
+            const diseaseSymptoms = document.getElementById('disease-symptoms');
+            const diseaseTreatment = document.getElementById('disease-treatment');
+            
+            // Fetch disease information
+            let diseaseInfoData = {};
+            fetch('/disease_info')
+                .then(response => response.json())
+                .then(data => {
+                    diseaseInfoData = data;
+                })
+                .catch(error => console.error('Error fetching disease info:', error));
+            
+            // Preview gambar yang dipilih
+            fileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                        resultContainer.style.display = 'none';
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Upload dan klasifikasikan gambar
+            uploadBtn.addEventListener('click', function() {
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert('Silakan pilih gambar terlebih dahulu.');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                // Tampilkan loading spinner
+                loading.style.display = 'block';
+                resultContainer.style.display = 'none';
+                
+                fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Sembunyikan loading spinner
+                    loading.style.display = 'none';
+                    
+                    if (data.error) {
+                        alert('Error: ' + data.error);
+                        return;
+                    }
+                    
+                    // Tampilkan hasil prediksi
+                    predictionClass.textContent = data.class.replace('Chicken_', '');
+                    predictionConfidence.textContent = `Tingkat kepercayaan: ${data.confidence.toFixed(2)}%`;
+                    
+                    // Bersihkan bar probabilitas sebelumnya
+                    probabilityBars.innerHTML = '';
+                    
+                    // Tambahkan bar probabilitas untuk setiap kelas
+                    const colors = {
+                        'Chicken_Coccidiosis': '#dc3545', // Merah
+                        'Chicken_Healthy': '#28a745',     // Hijau
+                        'Chicken_NewCastleDisease': '#fd7e14', // Oranye
+                        'Chicken_Salmonella': '#6f42c1'   // Ungu
+                    };
+                    
+                    for (const [className, probability] of Object.entries(data.probabilities)) {
+                        const barContainer = document.createElement('div');
+                        
+                        const classLabel = document.createElement('div');
+                        classLabel.className = 'class-label';
+                        classLabel.textContent = className.replace('Chicken_', '');
+                        
+                        const progressBar = document.createElement('div');
+                        progressBar.className = 'progress-bar';
+                        
+                        const progressFill = document.createElement('div');
+                        progressFill.className = 'progress-fill';
+                        progressFill.style.width = `${probability}%`;
+                        progressFill.style.backgroundColor = colors[className] || '#0d6efd';
+                        
+                        const progressLabel = document.createElement('div');
+                        progressLabel.className = 'progress-label';
+                        progressLabel.textContent = `${probability.toFixed(2)}%`;
+                        
+                        progressBar.appendChild(progressFill);
+                        progressFill.appendChild(progressLabel);
+                        
+                        barContainer.appendChild(classLabel);
+                        barContainer.appendChild(progressBar);
+                        
+                        probabilityBars.appendChild(barContainer);
+                    }
+                    
+                    // Tampilkan informasi penyakit
+                    if (diseaseInfoData[data.class]) {
+                        const info = diseaseInfoData[data.class];
+                        diseaseDescription.textContent = info.description;
+                        diseaseSymptoms.textContent = info.symptoms;
+                        diseaseTreatment.textContent = info.treatment;
+                        diseaseInfo.style.display = 'block';
+                    } else {
+                        diseaseInfo.style.display = 'none';
+                    }
+                    
+                    resultContainer.style.display = 'block';
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    alert('Error: ' + error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
